@@ -27,19 +27,19 @@ func main() {
 	polygammaOne := player{
 		"polygamma", 1, 1, 1, 14, 14, 14,
 		[]playerShip{
-			{&knownShips[0], 0, 0},    // Kleiner Transporter
-			{&knownShips[1], 0, 0},    // Großer Transporter
-			{&knownShips[2], 0, 0},    // Leichter Jäger
-			{&knownShips[3], 0, 0},    // Schwerer Jäger
-			{&knownShips[4], 0, 0},    // Kreuzer
-			{&knownShips[5], 500, 0},  // Schlachtschiff
-			{&knownShips[6], 0, 0},    // Kolonieschiff
-			{&knownShips[7], 0, 0},    // Recycler
-			{&knownShips[8], 0, 0},    // Spionagesonde
-			{&knownShips[9], 100, 0},  // Bomber
-			{&knownShips[11], 100, 0}, // Zerstörer
-			{&knownShips[12], 0, 0},   // Todesstern
-			{&knownShips[13], 100, 0}, // Schlachtkreuzer
+			{&knownShips[0], 0, 0},     // Kleiner Transporter
+			{&knownShips[1], 0, 0},     // Großer Transporter
+			{&knownShips[2], 0, 0},     // Leichter Jäger
+			{&knownShips[3], 0, 0},     // Schwerer Jäger
+			{&knownShips[4], 0, 0},     // Kreuzer
+			{&knownShips[5], 500, 250}, // Schlachtschiff
+			{&knownShips[6], 0, 0},     // Kolonieschiff
+			{&knownShips[7], 0, 0},     // Recycler
+			{&knownShips[8], 0, 0},     // Spionagesonde
+			{&knownShips[9], 100, 0},   // Bomber
+			{&knownShips[11], 100, 0},  // Zerstörer
+			{&knownShips[12], 0, 0},    // Todesstern
+			{&knownShips[13], 100, 0},  // Schlachtkreuzer
 		},
 		[]playerDefense{},
 		0, 0, 0, 0,
@@ -47,9 +47,9 @@ func main() {
 	polygammaTwo := player{
 		"polygamma", 1, 1, 1, 14, 14, 14,
 		[]playerShip{
-			{&knownShips[0], 0, 0},    // Kleiner Transporter
-			{&knownShips[1], 0, 0},    // Großer Transporter
-			{&knownShips[2], 1000, 0}, // Leichter Jäger
+			{&knownShips[0], 1500, 0}, // Kleiner Transporter
+			{&knownShips[1], 250, 0},  // Großer Transporter
+			{&knownShips[2], 1100, 0}, // Leichter Jäger
 			{&knownShips[3], 0, 0},    // Schwerer Jäger
 			{&knownShips[4], 0, 0},    // Kreuzer
 			{&knownShips[5], 0, 0},    // Schlachtschiff
