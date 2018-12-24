@@ -19,7 +19,6 @@ var isRound = true
 var speedFactor = 3
 var howOftenForAverage = 50
 var toChangePercent = 10
-var allowDrawOrLoose = false
 
 func main() {
 	debug.SetGCPercent(-1)
@@ -43,6 +42,7 @@ func main() {
 			{&knownShips[13], 100, 0}, // Schlachtkreuzer
 		},
 		[]playerDefense{},
+		0, 0, 0, 0,
 	}
 	polygammaTwo := player{
 		"polygamma", 1, 1, 1, 14, 14, 14,
@@ -62,6 +62,7 @@ func main() {
 			{&knownShips[13], 0, 0},   // Schlachtkreuzer
 		},
 		[]playerDefense{},
+		0, 0, 0, 0,
 	}
 
 	wazz := player{
@@ -92,6 +93,7 @@ func main() {
 			{&knownDefenses[6], 0},    // Kleine Schildkuppel
 			{&knownDefenses[7], 0},    // Große Schildkuppel
 		},
+		2000000, 1000000, 1500000, 50,
 	}
 
 	fight := createFight([]player{polygammaOne, polygammaTwo}, []player{wazz})
@@ -154,10 +156,15 @@ func (obj *movingDataBase) getBaseConsumption() float64 {
 type shipBase struct {
 	movingDataBase
 	rapidFireTable []int
+	capacity       int
 }
 
 func (obj *shipBase) getRapidFireTable() []int {
 	return obj.rapidFireTable
+}
+
+func (obj *shipBase) getCapacity() int {
+	return obj.capacity
 }
 
 func (obj *shipBase) isShip() bool {
@@ -174,6 +181,10 @@ func (obj *defenseBase) isShip() bool {
 
 func (obj *defenseBase) getRapidFireTable() []int {
 	return []int{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+}
+
+func (obj *defenseBase) getCapacity() int {
+	return 0
 }
 
 type playerShip struct {
@@ -219,6 +230,7 @@ type player struct {
 	galaxy, system, planet, weaponResearch, shieldResearch, hullResearch int
 	ships                                                                []playerShip
 	defenses                                                             []playerDefense
+	metal, crystal, deuterium, lootPercent                               int
 }
 
 func (pl *player) getDistanceTo(galaxy, system, planet int) int {
@@ -265,6 +277,7 @@ type objectForFighting interface {
 	getBaseAttack() float64
 	getRapidFireTableIndex() int
 	getRapidFireTable() []int
+	getCapacity() int
 	isShip() bool
 }
 
@@ -336,7 +349,7 @@ func (obj *concreteFightObject) tryToExplode() bool {
 type fight struct {
 	attackers, defenders                       []player
 	attackerObjectsAlive, defenderObjectsAlive []objectInFight
-	flightCosts, attackersLost                 int
+	flightCosts, attackersLost, totalCapacity  int
 }
 
 func (fi *fight) doRound(attackerObjs, defenderObjs []objectInFight, defenderAlive int) {
@@ -372,7 +385,44 @@ func (fi *fight) hasAttackerWon() bool {
 }
 
 func (fi *fight) attackerTotalLost() int {
-	return 3*fi.flightCosts + fi.attackersLost
+	defender := fi.defenders[0]
+	capacityLeft := fi.totalCapacity
+	metalLoot, crystalLoot, deuteriumLoot := 0, 0, 0
+	possibleMetalLoot := int(float64(defender.lootPercent) / 100.0 * float64(defender.metal))
+	possibleCrystalLoot := int(float64(defender.lootPercent) / 100.0 * float64(defender.crystal))
+	possibleDeuteriumLoot := int(float64(defender.lootPercent) / 100.0 * float64(defender.deuterium))
+	if fi.hasAttackerWon() {
+		// http://www.owiki.de/index.php?title=Beute
+		// step 1
+		metalLootFirst := int(math.Min(float64(capacityLeft)/3.0, float64(possibleMetalLoot)))
+		capacityLeft -= metalLootFirst
+		metalLoot += metalLootFirst
+		possibleMetalLoot -= metalLootFirst
+		// step 2
+		crystalLootFirst := int(math.Min(float64(capacityLeft)/2.0, float64(possibleCrystalLoot)))
+		capacityLeft -= crystalLootFirst
+		crystalLoot += crystalLootFirst
+		possibleCrystalLoot -= crystalLootFirst
+		// step 3
+		deuteriumLootFirst := int(math.Min(float64(capacityLeft), float64(possibleDeuteriumLoot)))
+		capacityLeft -= deuteriumLootFirst
+		deuteriumLoot += deuteriumLootFirst
+		possibleDeuteriumLoot -= deuteriumLootFirst
+		// step 4
+		if capacityLeft > 0 {
+			metalLootSecond := int(math.Min(float64(capacityLeft)/2.0, float64(possibleMetalLoot)))
+			capacityLeft -= metalLootSecond
+			metalLoot += metalLootSecond
+			possibleMetalLoot -= metalLootSecond
+			// step 5
+			crystalLootSecond := int(math.Min(float64(capacityLeft), float64(possibleCrystalLoot)))
+			capacityLeft -= crystalLootSecond
+			crystalLoot += crystalLootSecond
+			possibleCrystalLoot -= crystalLootSecond
+		}
+	}
+
+	return 3*fi.flightCosts + fi.attackersLost - 3*deuteriumLoot - int(1.5*float64(crystalLoot)) - metalLoot
 }
 
 func (fi *fight) goLower(toChange *int, lowestValue int, bestLosses float64) float64 {
@@ -475,9 +525,6 @@ func (fi *fight) doFightsAndReturnLosses() float64 {
 	for i := 0; i < howOftenForAverage; i++ {
 		fi.setupFight()
 		fi.doFight()
-		if !allowDrawOrLoose && !fi.hasAttackerWon() {
-			return 0.98 * math.MaxFloat64
-		}
 		lossesSum += float64(fi.attackerTotalLost())
 	}
 	lossesSum /= float64(howOftenForAverage)
@@ -510,6 +557,7 @@ func (fi *fight) doFight() {
 				continue
 			}
 
+			fi.totalCapacity -= obj.getCapacity()
 			fi.attackersLost += 3*obj.getDeuteriumCost() + int((1.0-float64(debrisPercent)/100.0)*float64(float64(obj.getMetalCost())+1.5*float64(obj.getCrystalCost())))
 		}
 		for delIndex := index; delIndex < len(fi.attackerObjectsAlive); delIndex++ {
@@ -610,9 +658,11 @@ func (fi *fight) setupFight() {
 	runtime.GC()
 	fi.flightCosts = 0
 	fi.attackersLost = 0
+	fi.totalCapacity = 0
 
 	for _, attacker := range fi.attackers {
 		for _, fightObject := range attacker.ships {
+			fi.totalCapacity += fightObject.getCount() * fightObject.getShip().getCapacity()
 			fi.flightCosts += getFuel(&attacker, fightObject.getShip(), fightObject.getCount(), fi.defenders[0].galaxy, fi.defenders[0].system, fi.defenders[0].planet)
 			maxHull, maxShield, attack := 0.001*math.Round(1000.0*fightObject.getObject().getBaseHull()*(1.0+0.1*float64(attacker.hullResearch))),
 				0.001*math.Round(1000.0*fightObject.getObject().getBaseShield()*(1.0+0.1*float64(attacker.shieldResearch))),
@@ -666,7 +716,7 @@ func (fi *fight) setupFight() {
 func createFight(attackers, defenders []player) fight {
 	toReturnFight := fight{
 		attackers, defenders,
-		nil, nil, 0, 0,
+		nil, nil, 0, 0, 0,
 	}
 	numberOfShipsAttacker, numberOfShipsDefender := 0, 0
 	for _, attacker := range attackers {
@@ -701,6 +751,7 @@ var knownShips = []shipBase{
 		[]int{
 			0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		},
+		5000,
 	},
 	{
 		movingDataBase{
@@ -712,6 +763,7 @@ var knownShips = []shipBase{
 		[]int{
 			0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		},
+		25000,
 	},
 	{
 		movingDataBase{
@@ -723,6 +775,7 @@ var knownShips = []shipBase{
 		[]int{
 			0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		},
+		50,
 	},
 	{
 		movingDataBase{
@@ -734,6 +787,7 @@ var knownShips = []shipBase{
 		[]int{
 			3, 0, 0, 0, 0, 0, 0, 0, 5, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		},
+		100,
 	},
 	{
 		movingDataBase{
@@ -745,6 +799,7 @@ var knownShips = []shipBase{
 		[]int{
 			0, 0, 6, 0, 0, 0, 0, 0, 5, 0, 5, 0, 0, 0, 10, 0, 0, 0, 0, 0, 0, 0,
 		},
+		800,
 	},
 	{
 		movingDataBase{
@@ -756,6 +811,7 @@ var knownShips = []shipBase{
 		[]int{
 			0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		},
+		1500,
 	},
 	{
 		movingDataBase{
@@ -767,6 +823,7 @@ var knownShips = []shipBase{
 		[]int{
 			0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		},
+		7500,
 	},
 	{
 		movingDataBase{
@@ -778,6 +835,7 @@ var knownShips = []shipBase{
 		[]int{
 			0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		},
+		20000,
 	},
 	{
 		movingDataBase{
@@ -789,6 +847,7 @@ var knownShips = []shipBase{
 		[]int{
 			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		},
+		0,
 	},
 	{
 		movingDataBase{
@@ -800,6 +859,7 @@ var knownShips = []shipBase{
 		[]int{
 			0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 5, 0, 0, 0, 20, 20, 10, 0, 10, 0, 0, 0,
 		},
+		500,
 	},
 	{
 		movingDataBase{
@@ -811,6 +871,7 @@ var knownShips = []shipBase{
 		[]int{
 			0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		},
+		0,
 	},
 	{
 		movingDataBase{
@@ -822,6 +883,7 @@ var knownShips = []shipBase{
 		[]int{
 			0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 5, 0, 0, 2, 0, 10, 0, 0, 0, 0, 0, 0,
 		},
+		2000,
 	},
 	{
 		movingDataBase{
@@ -833,6 +895,7 @@ var knownShips = []shipBase{
 		[]int{
 			250, 250, 200, 100, 33, 30, 250, 250, 1250, 25, 1250, 5, 0, 15, 200, 200, 100, 50, 100, 0, 0, 0,
 		},
+		1000000,
 	},
 	{
 		movingDataBase{
@@ -844,6 +907,7 @@ var knownShips = []shipBase{
 		[]int{
 			3, 3, 0, 4, 4, 7, 0, 0, 5, 0, 5, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		},
+		750,
 	},
 }
 
