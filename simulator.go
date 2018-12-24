@@ -272,16 +272,35 @@ func (pl *player) getDistanceTo(galaxy, system, planet int) int {
 }
 
 func (obj *shipBase) getShipSpeed(player *player) int {
+	driveType := obj.getDriveType()
+	baseSpeed := obj.getBaseSpeed()
+
+	if obj.getName() == "Kleiner Transporter" && player.impulseDrive <= 4 {
+		baseSpeed = 5000
+		driveType = 0
+	} else if obj.getName() == "Bomber" && player.hyperspaceDrive <= 7 {
+		baseSpeed = 4000
+		driveType = 1
+	} else if obj.getName() == "Recycler" {
+		if player.hyperspaceDrive >= 15 {
+			baseSpeed = 6000
+			driveType = 2
+		} else if player.impulseDrive >= 17 {
+			baseSpeed = 4000
+			driveType = 1
+		}
+	}
+
 	driveFactor := 0.0
-	if obj.driveType == 0 {
+	if driveType == 0 {
 		driveFactor = 0.001 * math.Round((1.0+10.0*float64(player.combustionDrive)/100.0)*1000.0)
-	} else if obj.driveType == 1 {
+	} else if driveType == 1 {
 		driveFactor = 0.001 * math.Round((1.0+20.0*float64(player.impulseDrive)/100.0)*1000.0)
-	} else if obj.driveType == 2 {
+	} else if driveType == 2 {
 		driveFactor = 0.001 * math.Round((1.0+30.0*float64(player.hyperspaceDrive)/100.0)*1000.0)
 	}
 
-	return int(math.Round(driveFactor * obj.getBaseSpeed()))
+	return int(math.Round(driveFactor * baseSpeed))
 }
 
 func getFlightTime(distance, minSpeed int) int {
@@ -380,7 +399,7 @@ type fight struct {
 	flightCosts, attackersLost, totalCapacity  int
 }
 
-func (fi *fight) doRound(attackerObjs, defenderObjs []objectInFight, defenderAlive int) {
+func doRound(attackerObjs, defenderObjs []objectInFight, defenderAlive int) {
 	for _, attackerObj := range attackerObjs {
 		allowedToShoot := true
 		for allowedToShoot {
@@ -574,8 +593,8 @@ func (fi *fight) doFight() {
 			obj.setCurrentShield(obj.getMaxShield())
 		}
 
-		fi.doRound(fi.attackerObjectsAlive, fi.defenderObjectsAlive, defenderAlive)
-		fi.doRound(fi.defenderObjectsAlive, fi.attackerObjectsAlive, attackerAlive)
+		doRound(fi.attackerObjectsAlive, fi.defenderObjectsAlive, defenderAlive)
+		doRound(fi.defenderObjectsAlive, fi.attackerObjectsAlive, attackerAlive)
 
 		index := 0
 		for _, obj := range fi.attackerObjectsAlive {
