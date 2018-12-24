@@ -15,7 +15,7 @@ var debrisPercent = 50
 var defenseIntoDebris = false
 var maxGala = 6
 var maxSunSystem = 499
-var isRound = true
+var isDonutUniverse = true
 var speedFactor = 3
 var howOftenForAverage = 50
 var toChangePercent = 10
@@ -236,14 +236,14 @@ type player struct {
 func (pl *player) getDistanceTo(galaxy, system, planet int) int {
 	if pl.galaxy != galaxy {
 		absVal := math.Abs(float64(pl.galaxy) - float64(galaxy))
-		if isRound {
+		if isDonutUniverse {
 			return 20000 * int(math.Min(absVal, float64(maxGala)-absVal))
 		} else {
 			return 20000 * int(absVal)
 		}
 	} else if pl.system != system {
 		absVal := math.Abs(float64(pl.system) - float64(system))
-		if isRound {
+		if isDonutUniverse {
 			return 2700 + 95*int(math.Min(absVal, float64(maxSunSystem)-absVal))
 		} else {
 			return 2700 + 95*int(absVal)
