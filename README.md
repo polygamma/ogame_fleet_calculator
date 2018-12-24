@@ -7,7 +7,9 @@ Calculator for nearly optimal fleet composition
 
 ```
 polygammaOne := player{
-    "polygamma", 1, 2, 3, 14, 15, 16,
+    "polygamma", 1, 2, 3,
+    14, 15, 16,
+    15, 13, 9,
     []playerShip{
         {&knownShips[0], 0, 0},     // Kleiner Transporter
         {&knownShips[1], 0, 0},     // Großer Transporter
@@ -37,8 +39,9 @@ polygammaOne := player{
 }
 ```
 
-This player has the name `polygamma`, coords of the planet `[1:2:3]`, `14,15,16` techs, has 500 battleships AND wants to use at least 250 of them,
-100 bomber, 100 destroyer and 100 battlecruiser.
+This player has the name `polygamma` with coords of the planet `[1:2:3]`.
+`14,15,16` techs and `15,13,9` drives.
+Has 500 battleships AND wants to use at least 250 of them, 100 bomber, 100 destroyer and 100 battlecruiser.
 He also has 1000 rocket launchers, 500 light lasers, 20 gauss cannons and 10 plasma turrets.
 He also has 2kk metal, 1kk crystal and 1.5kk deuterium and you can get 50 percent loot of him.
 Notice: This example does not make sense as is, since setting to use at least 250 of the 500 battleships will only be considered for attackers, but it explains the syntax.
