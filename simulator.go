@@ -72,40 +72,9 @@ func main() {
 		0, 0, 0, 0,
 	}
 
-	wazz := player{
-		"wazz", 2, 2, 2,
-		15, 15, 15,
-		15, 13, 9,
-		[]playerShip{
-			{&knownShips[0], 0, 0},  // Kleiner Transporter
-			{&knownShips[1], 0, 0},  // Großer Transporter
-			{&knownShips[2], 0, 0},  // Leichter Jäger
-			{&knownShips[3], 0, 0},  // Schwerer Jäger
-			{&knownShips[4], 0, 0},  // Kreuzer
-			{&knownShips[5], 0, 0},  // Schlachtschiff
-			{&knownShips[6], 0, 0},  // Kolonieschiff
-			{&knownShips[7], 0, 0},  // Recycler
-			{&knownShips[8], 0, 0},  // Spionagesonde
-			{&knownShips[9], 0, 0},  // Bomber
-			{&knownShips[10], 0, 0}, // Solarsatellit
-			{&knownShips[11], 0, 0}, // Zerstörer
-			{&knownShips[12], 0, 0}, // Todesstern
-			{&knownShips[13], 0, 0}, // Schlachtkreuzer
-		},
-		[]playerDefense{
-			{&knownDefenses[0], 1000}, // Raketenwerfer
-			{&knownDefenses[1], 500},  // Leichtes Lasergeschütz
-			{&knownDefenses[2], 0},    // Schweres Lasergeschütz
-			{&knownDefenses[3], 20},   // Gaußkanone
-			{&knownDefenses[4], 0},    // Ionengeschütz
-			{&knownDefenses[5], 10},   // Plasmawerfer
-			{&knownDefenses[6], 0},    // Kleine Schildkuppel
-			{&knownDefenses[7], 0},    // Große Schildkuppel
-		},
-		2000000, 1000000, 1500000, 50,
-	}
+	enemy := espionageToPlayer("sr-de-156-cd63d28e911040dc2b2a3ac792ed98cd6a74ad2d")
 
-	fight := createFight([]player{polygammaOne, polygammaTwo}, []player{wazz})
+	fight := createFight([]player{polygammaOne, polygammaTwo}, []player{enemy})
 	fight.optimizeAttackers()
 	fight.printFight()
 }
@@ -133,6 +102,107 @@ func fetchEspionageViaApi(key string) string {
 			"https://nomoreangel.de/api-reader/?apiid=%s&rawOut=on", key,
 		)), "<pre>", "</pre>",
 	)
+}
+
+func findValueInLine(lines []string, valueToFind string) string {
+	for i := 0; i < len(lines); i++ {
+		currentLine := lines[i]
+		if strings.Contains(currentLine, valueToFind) {
+			return strings.TrimSpace(strings.Split(currentLine, "=>")[1])
+		}
+	}
+	return "0"
+}
+
+func findValueNextLine(lines []string, value1, value2 string) string {
+	for i := 0; i < len(lines); i++ {
+		currentLine := lines[i]
+		if strings.Contains(currentLine, value1) && strings.Contains(currentLine, value2) {
+			return strings.TrimSpace(strings.Split(lines[i+1], "=>")[1])
+		}
+	}
+	return "0"
+}
+
+func espionageToPlayer(key string) player {
+	spionageReportLines := strings.Split(
+		strings.Split(fetchEspionageViaApi(key), "repairOrder")[0], "\n",
+	)
+
+	positionStringSplitted := strings.Split(
+		findValueInLine(spionageReportLines, "defender_planet_coordinates"), ":",
+	)
+	galaxy, _ := strconv.Atoi(positionStringSplitted[0])
+	system, _ := strconv.Atoi(positionStringSplitted[1])
+	planet, _ := strconv.Atoi(positionStringSplitted[2])
+
+	name := findValueInLine(spionageReportLines, "defender_name")
+
+	weaponResearch, _ := strconv.Atoi(findValueNextLine(spionageReportLines, "research_type", "109"))
+	shieldResearch, _ := strconv.Atoi(findValueNextLine(spionageReportLines, "research_type", "110"))
+	hullResearch, _ := strconv.Atoi(findValueNextLine(spionageReportLines, "research_type", "111"))
+
+	metal, _ := strconv.Atoi(findValueInLine(spionageReportLines, "metal"))
+	crystal, _ := strconv.Atoi(findValueInLine(spionageReportLines, "crystal"))
+	deuterium, _ := strconv.Atoi(findValueInLine(spionageReportLines, "deuterium"))
+	loot, _ := strconv.Atoi(findValueInLine(spionageReportLines, "loot_percentage"))
+
+	kt, _ := strconv.Atoi(findValueNextLine(spionageReportLines, "ship_type", "202"))
+	gt, _ := strconv.Atoi(findValueNextLine(spionageReportLines, "ship_type", "203"))
+	lj, _ := strconv.Atoi(findValueNextLine(spionageReportLines, "ship_type", "204"))
+	sj, _ := strconv.Atoi(findValueNextLine(spionageReportLines, "ship_type", "205"))
+	xer, _ := strconv.Atoi(findValueNextLine(spionageReportLines, "ship_type", "206"))
+	ss, _ := strconv.Atoi(findValueNextLine(spionageReportLines, "ship_type", "207"))
+	kolo, _ := strconv.Atoi(findValueNextLine(spionageReportLines, "ship_type", "208"))
+	rec, _ := strconv.Atoi(findValueNextLine(spionageReportLines, "ship_type", "209"))
+	spio, _ := strconv.Atoi(findValueNextLine(spionageReportLines, "ship_type", "210"))
+	bomb, _ := strconv.Atoi(findValueNextLine(spionageReportLines, "ship_type", "211"))
+	solar, _ := strconv.Atoi(findValueNextLine(spionageReportLines, "ship_type", "212"))
+	zerri, _ := strconv.Atoi(findValueNextLine(spionageReportLines, "ship_type", "213"))
+	rip, _ := strconv.Atoi(findValueNextLine(spionageReportLines, "ship_type", "214"))
+	sxer, _ := strconv.Atoi(findValueNextLine(spionageReportLines, "ship_type", "215"))
+
+	rak, _ := strconv.Atoi(findValueNextLine(spionageReportLines, "defense_type", "401"))
+	ll, _ := strconv.Atoi(findValueNextLine(spionageReportLines, "defense_type", "402"))
+	sl, _ := strconv.Atoi(findValueNextLine(spionageReportLines, "defense_type", "403"))
+	gauss, _ := strconv.Atoi(findValueNextLine(spionageReportLines, "defense_type", "404"))
+	io, _ := strconv.Atoi(findValueNextLine(spionageReportLines, "defense_type", "405"))
+	plasma, _ := strconv.Atoi(findValueNextLine(spionageReportLines, "defense_type", "406"))
+	ksk, _ := strconv.Atoi(findValueNextLine(spionageReportLines, "defense_type", "407"))
+	gsk, _ := strconv.Atoi(findValueNextLine(spionageReportLines, "defense_type", "408"))
+
+	return player{
+		name, galaxy, system, planet,
+		weaponResearch, shieldResearch, hullResearch,
+		0, 0, 0,
+		[]playerShip{
+			{&knownShips[0], kt, 0},
+			{&knownShips[1], gt, 0},
+			{&knownShips[2], lj, 0},
+			{&knownShips[3], sj, 0},
+			{&knownShips[4], xer, 0},
+			{&knownShips[5], ss, 0},
+			{&knownShips[6], kolo, 0},
+			{&knownShips[7], rec, 0},
+			{&knownShips[8], spio, 0},
+			{&knownShips[9], bomb, 0},
+			{&knownShips[10], solar, 0},
+			{&knownShips[11], zerri, 0},
+			{&knownShips[12], rip, 0},
+			{&knownShips[13], sxer, 0},
+		},
+		[]playerDefense{
+			{&knownDefenses[0], rak},
+			{&knownDefenses[1], ll},
+			{&knownDefenses[2], sl},
+			{&knownDefenses[3], gauss},
+			{&knownDefenses[4], io},
+			{&knownDefenses[5], plasma},
+			{&knownDefenses[6], ksk},
+			{&knownDefenses[7], gsk},
+		},
+		metal, crystal, deuterium, loot,
+	}
 }
 
 type stationaryDataBase struct {
