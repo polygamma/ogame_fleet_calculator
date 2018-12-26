@@ -123,6 +123,18 @@ func getRequestToString(url string) string {
 	return fmt.Sprintf("%s", body)
 }
 
+func stringBetweenSeps(body, sep1, sep2 string) string {
+	return strings.Split(strings.Split(body, sep1)[1], sep2)[0]
+}
+
+func fetchEspionageViaApi(key string) string {
+	return stringBetweenSeps(
+		getRequestToString(fmt.Sprintf(
+			"https://nomoreangel.de/api-reader/?apiid=%s&rawOut=on", key,
+		)), "<pre>", "</pre>",
+	)
+}
+
 type stationaryDataBase struct {
 	name                      string
 	metal, crystal, deuterium int
