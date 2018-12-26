@@ -2,8 +2,11 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
+	"log"
 	"math"
 	"math/rand"
+	"net/http"
 	"runtime"
 	"runtime/debug"
 	"strconv"
@@ -105,6 +108,19 @@ func main() {
 	fight := createFight([]player{polygammaOne, polygammaTwo}, []player{wazz})
 	fight.optimizeAttackers()
 	fight.printFight()
+}
+
+func getRequestToString(url string) string {
+	resp, err := http.Get(url)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return fmt.Sprintf("%s", body)
 }
 
 type stationaryDataBase struct {
