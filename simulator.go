@@ -112,6 +112,7 @@ type stationaryDataBase struct {
 	metal, crystal, deuterium int
 	shield, attack            float64
 	rapidFireTableIndex       int
+	index                     int
 }
 
 func (obj *stationaryDataBase) getName() string {
@@ -144,6 +145,10 @@ func (obj *stationaryDataBase) getBaseAttack() float64 {
 
 func (obj *stationaryDataBase) getRapidFireTableIndex() int {
 	return obj.rapidFireTableIndex
+}
+
+func (obj *stationaryDataBase) getIndex() int {
+	return obj.index
 }
 
 type movingDataBase struct {
@@ -275,13 +280,13 @@ func (obj *shipBase) getShipSpeed(player *player) int {
 	driveType := obj.getDriveType()
 	baseSpeed := obj.getBaseSpeed()
 
-	if obj.getName() == "Kleiner Transporter" && player.impulseDrive <= 4 {
+	if obj.getIndex() == 202 && player.impulseDrive <= 4 {
 		baseSpeed = 5000
 		driveType = 0
-	} else if obj.getName() == "Bomber" && player.hyperspaceDrive <= 7 {
+	} else if obj.getIndex() == 211 && player.hyperspaceDrive <= 7 {
 		baseSpeed = 4000
 		driveType = 1
-	} else if obj.getName() == "Recycler" {
+	} else if obj.getIndex() == 209 {
 		if player.hyperspaceDrive >= 15 {
 			baseSpeed = 6000
 			driveType = 2
@@ -322,6 +327,7 @@ type objectForFighting interface {
 	getBaseShield() float64
 	getBaseAttack() float64
 	getRapidFireTableIndex() int
+	getIndex() int
 	getRapidFireTable() []int
 	getCapacity() int
 	getDriveType() int
@@ -805,7 +811,7 @@ var knownShips = []shipBase{
 	{
 		movingDataBase{
 			stationaryDataBase{
-				"Kleiner Transporter", 2000, 2000, 0, 10, 5, 0,
+				"Kleiner Transporter", 2000, 2000, 0, 10, 5, 0, 202,
 			},
 			10000, 20,
 		},
@@ -817,7 +823,7 @@ var knownShips = []shipBase{
 	{
 		movingDataBase{
 			stationaryDataBase{
-				"Großer Transporter", 6000, 6000, 0, 25, 5, 1,
+				"Großer Transporter", 6000, 6000, 0, 25, 5, 1, 203,
 			},
 			7500, 50,
 		},
@@ -829,7 +835,7 @@ var knownShips = []shipBase{
 	{
 		movingDataBase{
 			stationaryDataBase{
-				"Leichter Jäger", 3000, 1000, 0, 10, 50, 2,
+				"Leichter Jäger", 3000, 1000, 0, 10, 50, 2, 204,
 			},
 			12500, 20,
 		},
@@ -841,7 +847,7 @@ var knownShips = []shipBase{
 	{
 		movingDataBase{
 			stationaryDataBase{
-				"Schwerer Jäger", 6000, 4000, 0, 25, 150, 3,
+				"Schwerer Jäger", 6000, 4000, 0, 25, 150, 3, 205,
 			},
 			10000, 75,
 		},
@@ -853,7 +859,7 @@ var knownShips = []shipBase{
 	{
 		movingDataBase{
 			stationaryDataBase{
-				"Kreuzer", 20000, 7000, 2000, 50, 400, 4,
+				"Kreuzer", 20000, 7000, 2000, 50, 400, 4, 206,
 			},
 			15000, 300,
 		},
@@ -865,7 +871,7 @@ var knownShips = []shipBase{
 	{
 		movingDataBase{
 			stationaryDataBase{
-				"Schlachtschiff", 45000, 15000, 0, 200, 1000, 5,
+				"Schlachtschiff", 45000, 15000, 0, 200, 1000, 5, 207,
 			},
 			10000, 500,
 		},
@@ -877,7 +883,7 @@ var knownShips = []shipBase{
 	{
 		movingDataBase{
 			stationaryDataBase{
-				"Kolonieschiff", 10000, 20000, 10000, 100, 50, 6,
+				"Kolonieschiff", 10000, 20000, 10000, 100, 50, 6, 208,
 			},
 			2500, 1000,
 		},
@@ -889,7 +895,7 @@ var knownShips = []shipBase{
 	{
 		movingDataBase{
 			stationaryDataBase{
-				"Recycler", 10000, 6000, 2000, 10, 1, 7,
+				"Recycler", 10000, 6000, 2000, 10, 1, 7, 209,
 			},
 			2000, 300,
 		},
@@ -901,7 +907,7 @@ var knownShips = []shipBase{
 	{
 		movingDataBase{
 			stationaryDataBase{
-				"Spionagesonde", 0, 1000, 0, 0.01, 0.01, 8,
+				"Spionagesonde", 0, 1000, 0, 0.01, 0.01, 8, 210,
 			},
 			100000000, 1,
 		},
@@ -913,7 +919,7 @@ var knownShips = []shipBase{
 	{
 		movingDataBase{
 			stationaryDataBase{
-				"Bomber", 50000, 25000, 15000, 500, 1000, 9,
+				"Bomber", 50000, 25000, 15000, 500, 1000, 9, 211,
 			},
 			5000, 1000,
 		},
@@ -925,7 +931,7 @@ var knownShips = []shipBase{
 	{
 		movingDataBase{
 			stationaryDataBase{
-				"Solarsatellit", 0, 2000, 500, 1, 1, 10,
+				"Solarsatellit", 0, 2000, 500, 1, 1, 10, 212,
 			},
 			0, 0,
 		},
@@ -937,7 +943,7 @@ var knownShips = []shipBase{
 	{
 		movingDataBase{
 			stationaryDataBase{
-				"Zerstörer", 60000, 50000, 15000, 500, 2000, 11,
+				"Zerstörer", 60000, 50000, 15000, 500, 2000, 11, 213,
 			},
 			5000, 1000,
 		},
@@ -949,7 +955,7 @@ var knownShips = []shipBase{
 	{
 		movingDataBase{
 			stationaryDataBase{
-				"Todesstern", 5000000, 4000000, 1000000, 50000, 200000, 12,
+				"Todesstern", 5000000, 4000000, 1000000, 50000, 200000, 12, 214,
 			},
 			100, 1,
 		},
@@ -961,7 +967,7 @@ var knownShips = []shipBase{
 	{
 		movingDataBase{
 			stationaryDataBase{
-				"Schlachtkreuzer", 30000, 40000, 15000, 400, 700, 13,
+				"Schlachtkreuzer", 30000, 40000, 15000, 400, 700, 13, 215,
 			},
 			10000, 250,
 		},
@@ -975,42 +981,42 @@ var knownShips = []shipBase{
 var knownDefenses = []defenseBase{
 	{
 		stationaryDataBase{
-			"Raketenwerfer", 2000, 0, 0, 20, 80, 14,
+			"Raketenwerfer", 2000, 0, 0, 20, 80, 14, 401,
 		},
 	},
 	{
 		stationaryDataBase{
-			"Leichtes Lasergeschütz", 1500, 500, 0, 25, 100, 15,
+			"Leichtes Lasergeschütz", 1500, 500, 0, 25, 100, 15, 402,
 		},
 	},
 	{
 		stationaryDataBase{
-			"Schweres Lasergeschütz", 6000, 2000, 0, 100, 250, 16,
+			"Schweres Lasergeschütz", 6000, 2000, 0, 100, 250, 16, 403,
 		},
 	},
 	{
 		stationaryDataBase{
-			"Gaußkanone", 20000, 15000, 2000, 200, 1100, 17,
+			"Gaußkanone", 20000, 15000, 2000, 200, 1100, 17, 404,
 		},
 	},
 	{
 		stationaryDataBase{
-			"Ionengeschütz", 2000, 6000, 0, 500, 150, 18,
+			"Ionengeschütz", 2000, 6000, 0, 500, 150, 18, 405,
 		},
 	},
 	{
 		stationaryDataBase{
-			"Plasmawerfer", 50000, 50000, 30000, 300, 3000, 19,
+			"Plasmawerfer", 50000, 50000, 30000, 300, 3000, 19, 406,
 		},
 	},
 	{
 		stationaryDataBase{
-			"Kleine Schildkuppel", 10000, 10000, 0, 2000, 1, 20,
+			"Kleine Schildkuppel", 10000, 10000, 0, 2000, 1, 20, 407,
 		},
 	},
 	{
 		stationaryDataBase{
-			"Große Schildkuppel", 50000, 50000, 0, 10000, 1, 21,
+			"Große Schildkuppel", 50000, 50000, 0, 10000, 1, 21, 408,
 		},
 	},
 }
