@@ -2,7 +2,7 @@
 Calculator for nearly optimal fleet composition
 
 - https://golang.org/dl/
-- change variables in `simulator.go` if needed, lines 14-21
+- change variables at the top of `simulator.go` if needed
 - set players in `func main()`, e.g.
 
 ```
