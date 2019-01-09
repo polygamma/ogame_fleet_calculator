@@ -412,8 +412,18 @@ func getFlightTime(distance, minSpeed int) int {
 
 func (obj *shipBase) getFuel(distance, duration, count int, player *player) int {
 	dummyVal := 35000.0 / float64(duration*speedFactor-10) * math.Sqrt(float64(distance)*10.0/float64(obj.getShipSpeed(player)))
+	baseConsumption := obj.getBaseConsumption()
+	if obj.getIndex() == 202 && player.impulseDrive <= 4 {
+		baseConsumption = 10
+	} else if obj.getIndex() == 209 {
+		if player.hyperspaceDrive >= 15 {
+			baseConsumption = 900
+		} else if player.impulseDrive >= 17 {
+			baseConsumption = 600
+		}
+	}
 
-	return int(math.Round(obj.getBaseConsumption() * float64(count) * float64(distance) / 35000.0 * ((dummyVal / 10.0) + 1.0) * ((dummyVal / 10.0) + 1.0)))
+	return int(math.Round(baseConsumption * float64(count) * float64(distance) / 35000.0 * ((dummyVal / 10.0) + 1.0) * ((dummyVal / 10.0) + 1.0)))
 }
 
 type objectForFighting interface {
